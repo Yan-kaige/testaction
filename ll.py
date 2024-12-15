@@ -6,6 +6,7 @@ from datetime import datetime
 import time
 from tqdm import tqdm  # 导入 tqdm
 import os
+from cloudbypass import Session
 
 # 获取开始时间
 start_time = datetime.now()
@@ -32,76 +33,77 @@ video_info_list = []
 
 order = 1
 
+with Session(apikey="708d4dac34cf48798b9c6f7a01978020") as session:
 
-# 循环从 01 到 1200 修改 URL 中的 from 参数
-for day in tqdm(range(1, 3), desc="Processing Pages"):
-    # 动态生成 URL，确保 'from' 参数始终是两位数
-    url = f"https://jable.tv/latest-updates/?mode=async&function=get_block&block_id=list_videos_latest_videos_list&sort_by=post_date&from={day:02d}&_=1733499634983"
+    # 循环从 01 到 1200 修改 URL 中的 from 参数
+    for day in tqdm(range(1, 3), desc="Processing Pages"):
+        # 动态生成 URL，确保 'from' 参数始终是两位数
+        url = f"https://jable.tv/latest-updates/?mode=async&function=get_block&block_id=list_videos_latest_videos_list&sort_by=post_date&from={day:02d}&_=1733499634983"
+        resp = session.get(url)
+        # 访问页面
+        # driver.get(url)
 
-    # 访问页面
-    driver.get(url)
+        # 等待页面加载
+        # time.sleep(3)
 
-    # 等待页面加载
-    time.sleep(3)
+        # 获取页面源代码
+        html_content = resp.text
+        # print("页面源代码"+html_content)
 
-    # 获取页面源代码
-    html_content = driver.page_source
-    print("页面源代码"+html_content)
+        # 解析页面内容
+        soup = BeautifulSoup(html_content, 'html.parser')
 
-    # 解析页面内容
-    soup = BeautifulSoup(html_content, 'html.parser')
+        # 查找所有 detail 元素
+        detail_elements = soup.find_all('div', class_='detail')
+        # print(f"第{day}页: {len(detail_elements)}")
 
-    # 查找所有 detail 元素
-    detail_elements = soup.find_all('div', class_='detail')
-    # print(f"第{day}页: {len(detail_elements)}")
+        # 遍历每个 detail 元素
 
-    # 遍历每个 detail 元素
+        for detail in detail_elements:
+            # 提取链接
+            link = detail.find('a')['href']
+            # 提取链接的文本内容
+            link_text = detail.find('a').text
 
-    for detail in detail_elements:
-        # 提取链接
-        link = detail.find('a')['href']
-        # 提取链接的文本内容
-        link_text = detail.find('a').text
+            # 提取数字
+            sub_title = detail.find('p', class_='sub-title').text
+            aa = sub_title.replace('\n', '-').replace('\t', '-')
+            split_text = aa.split('-')
+            filtered_data = [item.replace(' ', '') for item in split_text if item != '']
 
-        # 提取数字
-        sub_title = detail.find('p', class_='sub-title').text
-        aa = sub_title.replace('\n', '-').replace('\t', '-')
-        split_text = aa.split('-')
-        filtered_data = [item.replace(' ', '') for item in split_text if item != '']
+            # 定位到与 detail 一一对应的 img-box
+            img_box = detail.find_previous_sibling('div', class_='img-box')
+            fav_video_id = None
+            if img_box:
+                # 提取 data-fav-video-id
+                span = img_box.find('span', {'data-fav-video-id': True})
+                if span:
+                    fav_video_id = span['data-fav-video-id']
 
-        # 定位到与 detail 一一对应的 img-box
-        img_box = detail.find_previous_sibling('div', class_='img-box')
-        fav_video_id = None
-        if img_box:
-            # 提取 data-fav-video-id
-            span = img_box.find('span', {'data-fav-video-id': True})
-            if span:
-                fav_video_id = span['data-fav-video-id']
+            if len(filtered_data) != 0:
+                first_number = filtered_data[0]  # 第一个数字
+                last_number = filtered_data[1]  # 最后一个数字
+                # 创建 VideoInfo 对象
+                video_info = {
+                    'link': link,
+                    'link_text': link_text,
+                    'fav_video_id': fav_video_id if fav_video_id else "None",
+                    'number': first_number,
+                    'favorite': last_number,
+                    "order": order,
+                    "update_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                }
+                order = order + 1
 
-        if len(filtered_data) != 0:
-            first_number = filtered_data[0]  # 第一个数字
-            last_number = filtered_data[1]  # 最后一个数字
-            # 创建 VideoInfo 对象
-            video_info = {
-                'link': link,
-                'link_text': link_text,
-                'fav_video_id': fav_video_id if fav_video_id else "None",
-                'number': first_number,
-                'favorite': last_number,
-                "order": order,
-                "update_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            }
-            order = order + 1
+                video_info_list.append(video_info)
 
-            video_info_list.append(video_info)
+    # 过滤出 number > 1 的条目
+    filtered_videos = [video for video in video_info_list if int(video['number']) > 50000]
+    filtered_videos = [video for video in filtered_videos if int(video['favorite']) > 2000]
 
-# 过滤出 number > 1 的条目
-filtered_videos = [video for video in video_info_list if int(video['number']) > 50000]
-filtered_videos = [video for video in filtered_videos if int(video['favorite']) > 2000]
-
-# 打印结果
-for video in filtered_videos:
-    print(video)
+    # 打印结果
+    for video in filtered_videos:
+        print(video)
 
 
 
