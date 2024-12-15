@@ -7,6 +7,43 @@ import time
 from tqdm import tqdm  # 导入 tqdm
 import os
 from cloudbypass import Session
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.utils import formataddr
+from cloudbypass import Proxy
+
+
+def send_email(filtered_links, recipient_email):
+    try:
+        # 邮件发送配置
+        smtp_host = 'smtp.gmail.com'  # 使用 Gmail 的 SMTP 服务
+        smtp_port = 587
+        sender_email = os.getenv('SENDER_EMAIL')  # 替换为你的邮箱
+        sender_password = os.getenv('SENDER_PASSWORD')    # 替换为你的邮箱密码或应用专用密码
+
+        # 构建邮件内容
+        subject = "Filtered Video Links"
+        body = "Here are the filtered video links:\n\n" + "\n".join(filtered_links)
+
+        # 创建 MIME 邮件对象
+        msg = MIMEMultipart()
+        msg['From'] = formataddr(("Scraper Bot", sender_email))
+        msg['To'] = recipient_email
+        msg['Subject'] = subject
+
+        # 添加邮件正文
+        msg.attach(MIMEText(body, 'plain'))
+
+        # 发送邮件
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()  # 启用 TLS 加密
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, recipient_email, msg.as_string())
+
+        print(f"Email sent successfully to {recipient_email}")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
 
 # 获取开始时间
 start_time = datetime.now()
@@ -19,7 +56,7 @@ proxy = "localhost:10809"
 chrome_options = Options()
 chrome_options.add_argument("--disable-gpu")  # 禁用 GPU 加速
 chrome_options.add_argument("--headless")  # 无头模式，不显示浏览器窗口
-# chrome_options.add_argument(f'--proxy-server=http://{proxy}')  # 设置代理
+chrome_options.add_argument(f'--proxy-server=http://{proxy}')  # 设置代理
 chrome_options.add_argument("--window-size=1920x1080")  # 设置窗口大小（有时会影响一些元素加载）
 # chrome_options.add_argument("Cookie=_ga=GA1.1.373046596.1733502673; kt_tcookie=1; kt_ips=116.87.139.230%2C118.100.134.208; PHPSESSID=g7p0bdg9m6baijcgvum6k47bo7; asgfp2=1f999dd606ea1b05b9149595cb91dbbc; cf_clearance=Ul0.ULJc3Fw6JtYeGtKxvQDvNjm3C2Ad9rMDWNaU1IQ-1733553736-1.2.1.1-FKJC1blVrC.BDVlwr0GORJHD1YENxf9lnkXbcw9QiKJPTeV2Edoe_7.syybURmIVMHFNO2BARE2nvDeWO6OOFb8YYGBf_4AG3m6xNLyGluVYWl83iGfTMGWFBaiB9_NEjIedR.fcsKwQHCoENl9YV8B1sy.ClkgzKjX9YpuyOBqZMvVtRMWvZt3F4r5O3ltPLNJdWZuhcZ6Esih2.XFYGmv1ZzqajVYWaraEmCaK0wXeXMbYs9mrwNxyUCDsBuKQlOzZnA2W2f0BBPUjI.CkDtrH9l4hVrHtoLdVqKl8qMDo2Sq7TKMZA.JCHveWywlcEVqjKhj6SNYofhfiSp6qHQ_UsROT3uVqDHkiQZw9ukClsQHGWv4DETuQHIRxaUAPBA8iQoOZ4hwO1zCc_Dk.pg; _ga_1DTX7D4FHE=GS1.1.1733553736.3.1.1733553783.0.0.0; __cf_bm=Wa.dISW4xD9BkPSSz2wuc4j50lqpbMYte8Ct8dT3YCA-1733554786-1.0.1.1-WfEDOR4yvDW5vLvrBZ6IeZNtN3Z1NK_jBZiKkO4cOiu2hoG6KQv5Mz9tFfRz7M7U5ZqUCNCA5o028pns8_unTw")  # 设置窗口大小（有时会影响一些元素加载）
 chrome_options.add_argument(
@@ -44,8 +81,8 @@ with Session(apikey="708d4dac34cf48798b9c6f7a01978020") as session:
         # driver.get(url)
 
         # 等待页面加载
-        # time.sleep(3)
-
+        time.sleep(1)
+        # html_content = driver.page_source
         # 获取页面源代码
         html_content = resp.text
         # print("页面源代码"+html_content)
@@ -102,9 +139,17 @@ with Session(apikey="708d4dac34cf48798b9c6f7a01978020") as session:
     filtered_videos = [video for video in filtered_videos if int(video['favorite']) > 2000]
 
     # 打印结果
-    for video in filtered_videos:
-        print(video)
+for video in filtered_videos:
+    print(video)
 
+# 获取所有 filtered_videos 的链接集合
+filtered_links = [video['link'] for video in filtered_videos]
+
+# 指定收件人邮箱
+recipient_email = "1339201475@qq.com"  # 替换为接收人的邮箱
+
+# 发送邮件
+send_email(filtered_links, recipient_email)
 
 
 time.sleep(1)
@@ -173,6 +218,8 @@ print("Data inserted successfully.")
 # 输出插入和更新的行数
 print(f"Inserted rows: {inserted_rows}")
 print(f"Updated rows: {updated_rows}")
+
+
 
 # 获取结束时间
 end_time = datetime.now()
