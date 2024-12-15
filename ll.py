@@ -42,10 +42,11 @@ for day in tqdm(range(1, 3), desc="Processing Pages"):
     driver.get(url)
 
     # 等待页面加载
-    time.sleep(0.05)
+    time.sleep(3)
 
     # 获取页面源代码
     html_content = driver.page_source
+    print("页面源代码"+html_content)
 
     # 解析页面内容
     soup = BeautifulSoup(html_content, 'html.parser')
