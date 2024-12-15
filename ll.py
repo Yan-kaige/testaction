@@ -112,7 +112,7 @@ db_host = os.getenv('DB_HOST')
 db_user = os.getenv('DB_USER')
 db_password = os.getenv('DB_PASSWORD')
 db_name = os.getenv('DB_NAME')
-
+print(f"Connecting to: {db_host}, DB: {db_name}")
 # 连接到数据库
 conn = psycopg2.connect(
     host=db_host,
