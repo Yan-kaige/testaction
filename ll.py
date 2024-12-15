@@ -99,8 +99,8 @@ filtered_videos = [video for video in video_info_list if int(video['number']) > 
 filtered_videos = [video for video in filtered_videos if int(video['favorite']) > 2000]
 
 # 打印结果
-# for video in filtered_videos:
-#     print(video)
+for video in filtered_videos:
+    print(video)
 
 
 
