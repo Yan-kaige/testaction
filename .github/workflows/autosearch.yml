@@ -26,9 +26,9 @@ jobs:
 
     - name: Run Selenium Scraper
       env:
-        DB_HOST: ${{ DB_HOST }}
-        DB_USER: ${{ DB_USER }}
-        DB_PASSWORD: ${{ DB_PASSWORD }}
-        DB_NAME: ${{ DB_NAME }}
+        DB_HOST: ${{ env.DB_HOST }}
+        DB_USER: ${{ env.DB_USER }}
+        DB_PASSWORD: ${{ env.DB_PASSWORD }}
+        DB_NAME: ${{ env.DB_NAME }}
       run: |
         python ll.py  # 运行你的 Python 脚本
