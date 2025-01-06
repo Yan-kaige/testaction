@@ -70,6 +70,14 @@ video_info_list = []
 
 order = 1
 
+
+
+proxy = Proxy("13355214-res:nbcqwtzq")
+# 提取动态代理
+print("Extract dynamic proxy: ")
+print(str(proxy.set_dynamic()))
+print(str(proxy.set_region('US')))
+
 with Session(apikey="708d4dac34cf48798b9c6f7a01978020") as session:
 
     # 循环从 01 到 1200 修改 URL 中的 from 参数
